@@ -1,22 +1,90 @@
 import 'package:cham_ly_thuyet/models/nhiemvu.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:cham_ly_thuyet/data/database_provider.dart';
 
-class ChiTietNhiemVuPage extends StatelessWidget {
+class ChiTietNhiemVuPage extends StatefulWidget {
   final NhiemVuModel nhiemVu;
 
   const ChiTietNhiemVuPage({Key? key, required this.nhiemVu}) : super(key: key);
 
   @override
+  _ChiTietNhiemVuPageState createState() => _ChiTietNhiemVuPageState();
+}
+
+class _ChiTietNhiemVuPageState extends State<ChiTietNhiemVuPage> {
+  late NhiemVuModel _currentNhiemVu;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentNhiemVu = widget.nhiemVu;
+  }
+
+  Future<void> _toggleTaskStatus(bool? value) async {
+    if (value == null) return;
+    setState(() {
+      _currentNhiemVu.isCompleted = value;
+    });
+    try {
+      final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
+      await dbProvider.toggleNhiemVuStatus(_currentNhiemVu.id, value);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cập nhật trạng thái thành công')),
+      );
+    } catch (e) {
+      setState(() {
+        _currentNhiemVu.isCompleted = !value; // Revert on error
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi cập nhật: $e')),
+      );
+    }
+  }
+
+  Future<void> _deleteTask() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận'),
+        content: const Text('Bạn có chắc muốn xóa nhiệm vụ này?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
+        await dbProvider.deleteNhiemVu(_currentNhiemVu.id);
+        Navigator.pop(context, true); // Trở về và báo đã xóa
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi xóa: $e')),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chi tiết nhiệm vụ'),
+        title: const Text('Chi tiết nhiệm vụ'),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
+            icon: const Icon(Icons.edit),
             onPressed: () {
-              // Xử lý chỉnh sửa nhiệm vụ
+              // TODO: Mở màn hình chỉnh sửa
             },
           ),
         ],
@@ -29,18 +97,16 @@ class ChiTietNhiemVuPage extends StatelessWidget {
             Row(
               children: [
                 Checkbox(
-                  value: nhiemVu.isCompleted,
-                  onChanged: (value) {
-                    // Xử lý cập nhật trạng thái hoàn thành
-                  },
+                  value: _currentNhiemVu.isCompleted,
+                  onChanged: _toggleTaskStatus,
                 ),
                 Expanded(
                   child: Text(
-                    nhiemVu.title,
+                    _currentNhiemVu.title,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      decoration: nhiemVu.isCompleted
+                      decoration: _currentNhiemVu.isCompleted
                           ? TextDecoration.lineThrough
                           : TextDecoration.none,
                     ),
@@ -48,42 +114,39 @@ class ChiTietNhiemVuPage extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
-              nhiemVu.subtitle,
-              style: TextStyle(fontSize: 18),
+              _currentNhiemVu.subtitle,
+              style: const TextStyle(fontSize: 18),
             ),
-            SizedBox(height: 24),
-            _buildInfoRow(Icons.calendar_today, 'Ngày:', nhiemVu.formattedDate),
+            const SizedBox(height: 24),
+            _buildInfoRow(Icons.calendar_today, 'Ngày:', _currentNhiemVu.formattedDate),
             _buildInfoRow(Icons.access_time, 'Thời gian:', 
-                nhiemVu.formattedTimeRange(context)),
+                _currentNhiemVu.formattedTimeRange(context)),
             _buildInfoRow(Icons.timer, 'Thời lượng:', 
-                '${nhiemVu.duration.inHours} giờ ${nhiemVu.duration.inMinutes.remainder(60)} phút'),
-            SizedBox(height: 32),
-            if (nhiemVu.groupId != null) ...[
-              Text(
+                '${_currentNhiemVu.duration.inHours} giờ ${_currentNhiemVu.duration.inMinutes.remainder(60)} phút'),
+            const SizedBox(height: 32),
+            if (_currentNhiemVu.groupId != null) ...[
+              const Text(
                 'Thuộc nhóm công việc:',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              SizedBox(height: 8),
-              // Hiển thị thông tin nhóm công việc (cần kết nối với dữ liệu nhóm)
+              const SizedBox(height: 8),
               Container(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text('Nhóm công việc ${nhiemVu.groupId}'),
+                child: Text('Nhóm công việc ${_currentNhiemVu.groupId}'),
               ),
             ],
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Xử lý xóa nhiệm vụ
-        },
-        child: Icon(Icons.delete),
+        onPressed: _deleteTask,
+        child: const Icon(Icons.delete),
         backgroundColor: Colors.red,
       ),
     );
@@ -95,12 +158,12 @@ class ChiTietNhiemVuPage extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, color: Colors.blue),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Text(
             label,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(child: Text(value)),
         ],
       ),

@@ -1,4 +1,3 @@
-
 import 'package:cham_ly_thuyet/data/database_helper.dart';
 import 'package:cham_ly_thuyet/data/database_provider.dart';
 import 'package:cham_ly_thuyet/models/nhiemvu.dart';
@@ -17,7 +16,6 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
-
 
 class TrangchuWidget extends StatefulWidget {
   @override
@@ -155,18 +153,17 @@ class _TrangchuWidgetState extends State<TrangchuWidget> {
     }
   }
 
-  Future<void> _toggleTaskStatus(NhiemVuModel task) async {
+  Future<void> _toggleTaskStatus(NhiemVuModel task, bool value) async {
     try {
-      final newStatus = !task.isCompleted;
-      await _databaseProvider.toggleNhiemVuStatus(task.id, newStatus);
+      await _databaseProvider.toggleNhiemVuStatus(task.id, value);
       
       setState(() {
-        task.isCompleted = newStatus;
+        task.isCompleted = value;
       });
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(newStatus ? 'Đã hoàn thành nhiệm vụ' : 'Đã bỏ hoàn thành nhiệm vụ'),
+          content: Text(value ? 'Đã hoàn thành nhiệm vụ' : 'Đã bỏ hoàn thành nhiệm vụ'),
           duration: Duration(seconds: 1),
         ),
       );
@@ -181,95 +178,197 @@ class _TrangchuWidgetState extends State<TrangchuWidget> {
     }
   }
 
+  Future<void> _deleteTask(NhiemVuModel task) async {
+    try {
+      await _databaseProvider.deleteNhiemVu(task.id);
+      
+      setState(() {
+        _todayTasks.removeWhere((t) => t.id == task.id);
+        _allTasks.removeWhere((t) => t.id == task.id);
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã xóa nhiệm vụ'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    } catch (e) {
+      print("Error deleting task: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Có lỗi xảy ra khi xóa nhiệm vụ'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
  Widget _buildWorkGroupCard(NhomViec group) {
   return WorkGroupCard(
     nhomViec: group,
     isCompactView: true,
     onTaskToggle: (task, value) {
-      _toggleTaskStatus(task);
+      _toggleTaskStatus(task, value);
     },
   );
 }
 
   Widget _buildTaskItem(NhiemVuModel task) {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 4),
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: task.isCompleted ? Colors.green[50] : Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: task.isCompleted ? Colors.green[200]! : Colors.grey[300]!,
-          width: 1,
-        ),
+    final group = _workGroups.firstWhere(
+      (g) => g.id == task.groupId,
+      orElse: () => NhomViec(
+        id: '',
+        title: 'Không có nhóm',
+        description: '',
+        timeRange: '',
+        tasks: [],
+        color: '9E9E9E',
       ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => _toggleTaskStatus(task),
-            child: Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: task.isCompleted ? Colors.green : Colors.transparent,
-                border: Border.all(
-                  color: task.isCompleted ? Colors.green : Colors.grey[400]!,
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(4),
+    );
+
+    return Dismissible(
+      key: Key(task.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: Colors.red,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Xác nhận'),
+            content: const Text('Bạn có chắc muốn xóa nhiệm vụ này?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Hủy'),
               ),
-              child: task.isCompleted
-                  ? Icon(Icons.check, size: 14, color: Colors.white)
-                  : null,
-            ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Xóa'),
+              ),
+            ],
           ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  task.title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: task.isCompleted ? Colors.green[700] : Colors.grey[800],
-                    decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+        );
+      },
+      onDismissed: (direction) => _deleteTask(task),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: task.isCompleted ? Colors.green[50] : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: task.isCompleted ? Colors.green[200]! : Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => _toggleTaskStatus(task, !task.isCompleted),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: task.isCompleted ? Colors.green : Colors.transparent,
+                  border: Border.all(
+                    color: task.isCompleted ? Colors.green : Colors.grey[400]!,
+                    width: 2,
                   ),
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                if (task.subtitle.isNotEmpty) ...[
-                  SizedBox(height: 2),
+                child: task.isCompleted
+                    ? const Icon(Icons.check, size: 16, color: Colors.white)
+                    : null,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    task.subtitle,
+                    task.title,
                     style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: task.isCompleted ? Colors.green[700] : Colors.grey[800],
                       decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                     ),
                   ),
+                  if (task.subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      task.subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Color(int.parse('0xFF${group.color}')),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        group.title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                      Text(
+                        task.formattedTimeRange(context),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
-              ],
+              ),
             ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.access_time, size: 12, color: Colors.grey[600]),
-                SizedBox(width: 4),
-                Text(
-                  task.formattedTimeRange(context),
-                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: Colors.grey[600]),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Text('Chỉnh sửa'),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Xóa'),
                 ),
               ],
+              onSelected: (value) async {
+                if (value == 'delete') {
+                  await _deleteTask(task);
+                } else if (value == 'edit') {
+                  // TODO: Implement edit functionality
+                }
+              },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

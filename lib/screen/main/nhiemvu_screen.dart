@@ -52,40 +52,43 @@ class _NhiemVuState extends State<NhiemVu> {
     }
   }
 
-  // Trong nhiemvu_screen.dart
-Future<void> _loadData() async {
-  try {
-    final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
-    
-    // Load tasks trước
-    final tasks = await dbProvider.getNhiemVuList();
-    final Map<String, List<NhiemVuModel>> groupedTasks = {};
-    
-    for (var task in tasks) {
-      final dateKey = DateFormat('yyyy-MM-dd').format(task.date);
-      groupedTasks.putIfAbsent(dateKey, () => []).add(task);
-    }
-    
-    setState(() {
-      _taskGroups = groupedTasks.entries.map((entry) => NhiemVuGroup(
-        date: DateTime.parse(entry.key),
-        tasks: entry.value,
-      )).toList();
+  Future<void> _loadData() async {
+    try {
+      final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
       
-      _taskGroups.sort((a, b) => a.date.compareTo(b.date));
-      _isLoading = false;
-    });
-    
-  } catch (e) {
-    _showErrorSnackbar('Lỗi khi tải dữ liệu');
-    setState(() => _isLoading = false);
+      // Load work groups
+      _workGroups = await dbProvider.getNhomViecList();
+      
+      // Load tasks
+      final tasks = await dbProvider.getNhiemVuList();
+      final Map<String, List<NhiemVuModel>> groupedTasks = {};
+      
+      for (var task in tasks) {
+        final dateKey = DateFormat('yyyy-MM-dd').format(task.date);
+        groupedTasks.putIfAbsent(dateKey, () => []).add(task);
+      }
+      
+      setState(() {
+        _taskGroups = groupedTasks.entries.map((entry) => NhiemVuGroup(
+          date: DateTime.parse(entry.key),
+          tasks: entry.value,
+        )).toList();
+        
+        _taskGroups.sort((a, b) => a.date.compareTo(b.date));
+        _isLoading = false;
+      });
+      
+    } catch (e) {
+      _showErrorSnackbar('Lỗi khi tải dữ liệu');
+      setState(() => _isLoading = false);
+    }
   }
-}
 
   Future<void> _addNewTask(NhiemVuModel newTask) async {
     try {
       final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
       await dbProvider.insertNhiemVu(newTask);
+      await _loadData(); // Refresh data after adding
     } catch (e) {
       _showErrorSnackbar('Lỗi khi thêm nhiệm vụ');
       print("Error adding new task: $e");
@@ -96,6 +99,7 @@ Future<void> _loadData() async {
     try {
       final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
       await dbProvider.toggleNhiemVuStatus(task.id, isCompleted);
+      setState(() => task.isCompleted = isCompleted);
     } catch (e) {
       _showErrorSnackbar('Lỗi khi cập nhật trạng thái');
       print("Error toggling task status: $e");
@@ -107,6 +111,21 @@ Future<void> _loadData() async {
     try {
       final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
       await dbProvider.deleteNhiemVu(task.id);
+      
+      // Update UI after deletion
+      setState(() {
+        for (var group in _taskGroups) {
+          group.tasks.removeWhere((t) => t.id == task.id);
+        }
+        _taskGroups.removeWhere((group) => group.tasks.isEmpty);
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã xóa nhiệm vụ'),
+          duration: Duration(seconds: 1),
+        ),
+      );
     } catch (e) {
       _showErrorSnackbar('Lỗi khi xóa nhiệm vụ');
       print("Error deleting task: $e");
@@ -134,11 +153,11 @@ Future<void> _loadData() async {
           ),
         ],
       ),
-            drawer: UnifiedDrawer(
-          selectedIndex: 1, // Index cho trang chủ
-          currentUser: _currentUser,
-          onMenuSelected: (index) {
-    // Xử lý khi chọn menu nếu cần
+      drawer: UnifiedDrawer(
+        selectedIndex: 1, // Index cho trang chủ
+        currentUser: _currentUser,
+        onMenuSelected: (index) {
+          // Xử lý khi chọn menu nếu cần
           print('Selected menu index: $index');
         },
       ),
@@ -199,8 +218,6 @@ Future<void> _loadData() async {
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
-
-  
 
   Widget _buildBottomNavBar() {
     return BottomNavigationBar(
@@ -279,62 +296,118 @@ Future<void> _loadData() async {
         );
       },
       onDismissed: (direction) => _deleteTask(task),
-      child: Card(
+      child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: CheckboxListTile(
-          title: Text(task.title),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(task.subtitle),
-              const SizedBox(height: 4),
-              Row(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: task.isCompleted ? Colors.green[50] : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: task.isCompleted ? Colors.green[200]! : Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => _toggleTaskStatus(task, !task.isCompleted),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: task.isCompleted ? Colors.green : Colors.transparent,
+                  border: Border.all(
+                    color: task.isCompleted ? Colors.green : Colors.grey[400]!,
+                    width: 2,
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: task.isCompleted
+                    ? const Icon(Icons.check, size: 16, color: Colors.white)
+                    : null,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: group.colorValue,
-                      shape: BoxShape.circle,
+                  Text(
+                    task.title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: task.isCompleted ? Colors.green[700] : Colors.grey[800],
+                      decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${group.title} • ${task.formattedDate}',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  if (task.subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      task.subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Color(int.parse('0xFF${group.color}')),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        group.title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormat('HH:mm').format(task.date),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-          value: task.isCompleted,
-          onChanged: (bool? value) {
-            if (value != null) {
-              setState(() => task.isCompleted = value);
-              _toggleTaskStatus(task, value);
-            }
-          },
-          controlAffinity: ListTileControlAffinity.leading,
-          secondary: PopupMenuButton(
-            icon: const Icon(Icons.more_vert),
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'edit',
-                child: Text('Chỉnh sửa'),
-              ),
-              const PopupMenuItem(
-                value: 'delete',
-                child: Text('Xóa'),
-              ),
-            ],
-            onSelected: (value) async {
-              if (value == 'delete') {
-                await _deleteTask(task);
-              } else if (value == 'edit') {
-                // TODO: Implement edit functionality
-              }
-            },
-          ),
+            ),
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: Colors.grey[600]),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Text('Chỉnh sửa'),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Xóa'),
+                ),
+              ],
+              onSelected: (value) async {
+                if (value == 'delete') {
+                  await _deleteTask(task);
+                } else if (value == 'edit') {
+                  // TODO: Implement edit functionality
+                }
+              },
+            ),
+          ],
         ),
       ),
     );

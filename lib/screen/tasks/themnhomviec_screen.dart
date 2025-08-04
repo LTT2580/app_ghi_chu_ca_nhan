@@ -2,6 +2,7 @@ import 'package:cham_ly_thuyet/models/nhiemvu.dart';
 import 'package:cham_ly_thuyet/models/nhomviec.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../data/database_provider.dart';
 
 class ThemNhomViecScreen extends StatefulWidget {
@@ -64,9 +65,11 @@ class _ThemNhomViecScreenState extends State<ThemNhomViecScreen> {
       );
 
       try {
-        final dbProvider = DatabaseProvider();
+        final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
+        // Lưu nhóm việc
         await dbProvider.insertNhomViec(newGroup);
-
+        
+        // Lưu các nhiệm vụ thuộc nhóm
         for (var task in _tasks) {
           await dbProvider.insertNhiemVu(task.copyWith(groupId: newGroup.id));
         }

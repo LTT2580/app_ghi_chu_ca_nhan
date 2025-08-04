@@ -2,6 +2,8 @@ import 'package:cham_ly_thuyet/models/nhiemvu.dart';
 import 'package:cham_ly_thuyet/models/nhomviec.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:cham_ly_thuyet/data/database_provider.dart';
 
 class ThemNhiemVu extends StatefulWidget {
   final List<NhomViec> availableGroups;
@@ -37,7 +39,7 @@ class _ThemNhiemVuState extends State<ThemNhiemVu> {
     _endTime = TimeOfDay(hour: _startTime!.hour + 1, minute: _startTime!.minute);
   }
 
-  void _saveTask() {
+  void _saveTask() async {
     if (_formKey.currentState!.validate()) {
       if (_startTime == null || _endTime == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -65,11 +67,24 @@ class _ThemNhiemVuState extends State<ThemNhiemVu> {
         groupId: _selectedGroup?.id,
       );
 
-      if (widget.onTaskAdded != null) {
-        widget.onTaskAdded!(newTask);
-      }
+      try {
+        final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
+        await dbProvider.insertNhiemVu(newTask);
+        
+        if (widget.onTaskAdded != null) {
+          widget.onTaskAdded!(newTask);
+        }
 
-      Navigator.pop(context, newTask);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã thêm nhiệm vụ thành công')),
+        );
+        
+        Navigator.pop(context, newTask);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi lưu nhiệm vụ: $e')),
+        );
+      }
     }
   }
 

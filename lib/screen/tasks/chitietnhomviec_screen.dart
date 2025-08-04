@@ -52,7 +52,7 @@ class _ChitietnhomviecWidgetState extends State<ChitietnhomviecWidget> {
   }
 
   double get completionPercentage {
-    if (widget.group.tasks.isEmpty) return 0;
+    if (widget.group.tasks.isEmpty) return 0.0;
     return completedCount / widget.group.tasks.length;
   }
 
@@ -112,6 +112,12 @@ class _ChitietnhomviecWidgetState extends State<ChitietnhomviecWidget> {
             context, MaterialPageRoute(builder: (context) => const NhiemVu()));
         break;
     }
+  }
+
+  String _formatTime(TimeOfDay time) {
+    final now = DateTime.now();
+    final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+    return DateFormat('hh:mm a').format(dt);
   }
 
   @override
@@ -176,7 +182,7 @@ class _ChitietnhomviecWidgetState extends State<ChitietnhomviecWidget> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -186,24 +192,24 @@ class _ChitietnhomviecWidgetState extends State<ChitietnhomviecWidget> {
                       style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(
                     widget.group.title,
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   LinearProgressIndicator(
                     value: completionPercentage,
                     backgroundColor: Colors.white.withOpacity(0.3),
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     "${(completionPercentage * 100).toStringAsFixed(0)}% hoàn thành",
-                    style: TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ],
               ),
@@ -405,7 +411,7 @@ class _ChitietnhomviecWidgetState extends State<ChitietnhomviecWidget> {
             ),
           ),
           trailing: Container(
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(6),
@@ -413,11 +419,11 @@ class _ChitietnhomviecWidgetState extends State<ChitietnhomviecWidget> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.access_time, size: 14, color: Colors.grey),
-                SizedBox(width: 4),
+                const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
                 Text(
-                  DateFormat('hh:mm a').format(task.date),
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  _formatTime(task.startTime),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
