@@ -101,7 +101,7 @@ class _ChitietnhomviecWidgetState extends State<ChitietnhomviecWidget> {
         break;
       case 2:
         Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => LichtrinhWidget()));
+            context, MaterialPageRoute(builder: (context) => LichtrinhScreen()));
         break;
       case 3:
         Navigator.pushReplacement(
@@ -306,7 +306,7 @@ class _ChitietnhomviecWidgetState extends State<ChitietnhomviecWidget> {
             onTap: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LichtrinhWidget()),
+                MaterialPageRoute(builder: (context) => LichtrinhScreen()),
               );
             },
           ),

@@ -16,12 +16,12 @@ import 'nhiemvu_screen.dart';
 import '../tasks/themnhiemvu_screen.dart';
 import '../../data/database_provider.dart';
 
-class LichtrinhWidget extends StatefulWidget {
+class LichtrinhScreen extends StatefulWidget {
   @override
-  _LichtrinhWidgetState createState() => _LichtrinhWidgetState();
+  _LichtrinhScreenState createState() => _LichtrinhScreenState();
 }
 
-class _LichtrinhWidgetState extends State<LichtrinhWidget> {
+class _LichtrinhScreenState extends State<LichtrinhScreen> {
   DateTime _currentDate = DateTime.now();
   DateTime _selectedDate = DateTime.now();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -34,7 +34,6 @@ class _LichtrinhWidgetState extends State<LichtrinhWidget> {
   void initState() {
     super.initState();
     _loadCurrentUser();
-    _loadData();
     _loadGroups();
   }
 
@@ -49,6 +48,10 @@ class _LichtrinhWidgetState extends State<LichtrinhWidget> {
       }
     } catch (e) {
       print("Lỗi khi tải người dùng: $e");
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -66,19 +69,6 @@ class _LichtrinhWidgetState extends State<LichtrinhWidget> {
     }
   }
 
-  Future<void> _loadData() async {
-    try {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      print("Lỗi khi tải dữ liệu: $e");
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
   List<NhiemVuModel> _getTasksForSelectedDate(List<NhiemVuModel> allTasks) {
     return allTasks.where((task) => 
         task.date.year == _selectedDate.year &&
@@ -87,16 +77,13 @@ class _LichtrinhWidgetState extends State<LichtrinhWidget> {
   }
 
   String get formattedDate {
-  return DateFormat('dd/MM/yyyy', 'vi').format(_selectedDate); // Thêm locale 'vi'
-}
+    return DateFormat('dd/MM/yyyy', 'vi').format(_selectedDate);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<DatabaseProvider>(
       builder: (context, dbProvider, child) {
-        final allTasks = dbProvider.getNhiemVuList();
-        final tasksForDate = _getTasksForSelectedDate(allTasks as List<NhiemVuModel>);
-
         return Scaffold(
           key: _scaffoldKey,
           appBar: AppBar(
@@ -106,19 +93,14 @@ class _LichtrinhWidgetState extends State<LichtrinhWidget> {
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
             ),
           ),
-          drawer: Thanhmenu(
-            onMenuSelected: (index) {
-              Navigator.pop(context);
-              if (index == 0) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => TrangchuWidget()),
-                );
-              }
-            },
-            selectedIndex: 2,
-            currentUser: _currentUser,
-          ),
+          drawer: UnifiedDrawer(
+  selectedIndex: 2, // Index cho lịch trình
+  currentUser: _currentUser,
+  onMenuSelected: (index) {
+    // Xử lý khi chọn menu nếu cần
+    print('Selected menu index: $index');
+  },
+),
           body: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : Column(
@@ -128,17 +110,55 @@ class _LichtrinhWidgetState extends State<LichtrinhWidget> {
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            CalendarWidget(
-                            currentDate: _currentDate,
-                            selectedDate: _selectedDate,
-                            allTasks: allTasks as List<NhiemVuModel>,
-                            onDateSelected: (newDate) {
-                            setState(() {
-                           _selectedDate = newDate;
-                                });
-                               },
-                              ),
-                            _buildTaskList(tasksForDate),
+                            FutureBuilder<List<NhiemVuModel>>(
+                              future: dbProvider.getNhiemVuList(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                  return Center(child: CircularProgressIndicator());
+                                } else if (snapshot.hasError) {
+                                  return Center(child: Text('Error: ${snapshot.error}'));
+                                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                  return CalendarWidget(
+                                    currentDate: _currentDate,
+                                    selectedDate: _selectedDate,
+                                    allTasks: [],
+                                    onDateSelected: (newDate) {
+                                      setState(() {
+                                        _selectedDate = newDate;
+                                      });
+                                    },
+                                  );
+                                } else {
+                                  final allTasks = snapshot.data!;
+                                  return CalendarWidget(
+                                    currentDate: _currentDate,
+                                    selectedDate: _selectedDate,
+                                    allTasks: allTasks,
+                                    onDateSelected: (newDate) {
+                                      setState(() {
+                                        _selectedDate = newDate;
+                                      });
+                                    },
+                                  );
+                                }
+                              },
+                            ),
+                            FutureBuilder<List<NhiemVuModel>>(
+                              future: dbProvider.getNhiemVuList(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                  return Center(child: CircularProgressIndicator());
+                                } else if (snapshot.hasError) {
+                                  return Center(child: Text('Error: ${snapshot.error}'));
+                                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                  return _buildTaskList([]);
+                                } else {
+                                  final allTasks = snapshot.data!;
+                                  final tasksForDate = _getTasksForSelectedDate(allTasks);
+                                  return _buildTaskList(tasksForDate);
+                                }
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -147,11 +167,12 @@ class _LichtrinhWidgetState extends State<LichtrinhWidget> {
                   ],
                 ),
           bottomNavigationBar: AppBottomNavigation(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-          setState(() => _selectedIndex = index);
-  },
-),
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() => _selectedIndex = index);
+              _onBottomNavItemTapped(index);
+            },
+          ),
         );
       },
     );
@@ -498,117 +519,5 @@ class _LichtrinhWidgetState extends State<LichtrinhWidget> {
         );
         break;
     }
-  }
-
-  Widget _buildCalendarGrid(List<NhiemVuModel> allTasks) {
-    DateTime firstDay = DateTime(_currentDate.year, _currentDate.month, 1);
-    int startingOffset = firstDay.weekday - 1;
-    DateTime lastDay = DateTime(_currentDate.year, _currentDate.month + 1, 0);
-    int totalDays = lastDay.day;
-    int prevMonthDays = DateTime(_currentDate.year, _currentDate.month, 0).day;
-    int nextMonthDays = 42 - (startingOffset + totalDays);
-
-    List<Widget> dayWidgets = [];
-    List<String> weekdays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-    
-    for (var day in weekdays) {
-      dayWidgets.add(
-        Center(
-          child: Text(
-            day,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-      );
-    }
-
-    for (int i = 0; i < startingOffset; i++) {
-      dayWidgets.add(
-        Opacity(
-          opacity: 0.5,
-          child: Center(
-            child: Text('${prevMonthDays - startingOffset + i + 1}'),
-          ),
-        ),
-      );
-    }
-
-    for (int i = 1; i <= totalDays; i++) {
-      bool isToday = i == DateTime.now().day && 
-                    _currentDate.month == DateTime.now().month && 
-                    _currentDate.year == DateTime.now().year;
-      
-      bool isSelected = i == _selectedDate.day && 
-                       _currentDate.month == _selectedDate.month && 
-                       _currentDate.year == _selectedDate.year;
-
-      bool hasTasks = allTasks.any((task) => 
-          task.date.day == i &&
-          task.date.month == _currentDate.month &&
-          task.date.year == _currentDate.year);
-
-      dayWidgets.add(
-        GestureDetector(
-          onTap: () => setState(() {
-            _selectedDate = DateTime(_currentDate.year, _currentDate.month, i);
-          }),
-          child: Container(
-            margin: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.blue : null,
-              shape: BoxShape.circle,
-              border: isToday ? Border.all(color: Colors.blue, width: 2) : null,
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Center(
-                  child: Text(
-                    '$i',
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : 
-                            (isToday ? Colors.blue : Colors.black),
-                      fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                ),
-                if (hasTasks)
-                  Positioned(
-                    bottom: 4,
-                    child: Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    for (int i = 1; i <= nextMonthDays; i++) {
-      dayWidgets.add(
-        Opacity(
-          opacity: 0.5,
-          child: Center(
-            child: Text('$i'),
-          ),
-        ),
-      );
-    }
-
-    return GridView.count(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      crossAxisCount: 7,
-      childAspectRatio: 1.0,
-      padding: const EdgeInsets.all(8),
-      children: dayWidgets,
-    );
   }
 }

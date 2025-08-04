@@ -1,6 +1,5 @@
 import 'package:cham_ly_thuyet/widgets/The_nhom_viec.dart';
 import 'package:cham_ly_thuyet/widgets/app_bottom_navigation.dart';
-import 'package:cham_ly_thuyet/widgets/app_drawer.dart';
 import 'package:cham_ly_thuyet/data/database_provider.dart';
 import 'package:cham_ly_thuyet/models/nhiemvu.dart';
 import 'package:cham_ly_thuyet/models/nhomviec.dart';
@@ -11,6 +10,7 @@ import 'package:cham_ly_thuyet/screen/main/tiendo_screen.dart';
 import 'package:cham_ly_thuyet/screen/main/trangchu_screen.dart';
 import 'package:cham_ly_thuyet/screen/tasks/chitietnhomviec_screen.dart';
 import 'package:cham_ly_thuyet/screen/tasks/themnhomviec_screen.dart';
+import 'package:cham_ly_thuyet/widgets/thanhmenu_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -108,29 +108,6 @@ class _NhomViecWidgetState extends State<NhomViecWidget> {
     );
   }
 
-  // Hàm xử lý khi chọn item trong drawer
-  void _handleDrawerSelection(int index) {
-    setState(() => _selectedIndex = index);
-    Navigator.pop(context); // Đóng drawer
-    
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => TrangchuWidget()));
-        break;
-      case 1:
-        // Đang ở màn hình này, không cần làm gì
-        break;
-      case 2:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LichtrinhWidget()));
-        break;
-      case 3:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const TienDoWidget()));
-        break;
-      case 4:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NhiemVu()));
-        break;
-    }
-  }
 
   // Hàm xử lý khi chọn item bottom nav
   void _handleBottomNavSelection(int index) {
@@ -143,7 +120,7 @@ class _NhomViecWidgetState extends State<NhomViecWidget> {
         // Đang ở màn hình này, không cần làm gì
         break;
       case 2: 
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LichtrinhWidget()));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LichtrinhScreen()));
         break;
       case 3: 
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const TienDoWidget()));
@@ -166,10 +143,13 @@ class _NhomViecWidgetState extends State<NhomViecWidget> {
           ),
         ],
       ),
-      drawer: AppDrawer(
-        currentUser: _currentUser,
-        selectedIndex: _selectedIndex,
-        onMenuSelected: _handleDrawerSelection,
+      drawer: UnifiedDrawer(
+          selectedIndex: 0, // Index cho trang chủ
+          currentUser: _currentUser,
+          onMenuSelected: (index) {
+    // Xử lý khi chọn menu nếu cần
+          print('Selected menu index: $index');
+        },
       ),
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator())

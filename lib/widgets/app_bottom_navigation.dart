@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cham_ly_thuyet/screen/main/lichtrinh_screen.dart';
+import 'package:cham_ly_thuyet/screen/main/nhomviec_screen.dart';
+import 'package:cham_ly_thuyet/screen/main/tiendo_screen.dart';
+import 'package:cham_ly_thuyet/screen/main/trangchu_screen.dart';
+import 'package:cham_ly_thuyet/screen/main/nhiemvu_screen.dart';
 
 class AppBottomNavigation extends StatelessWidget {
   final int currentIndex;
@@ -13,7 +18,7 @@ class AppBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
+      items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
         BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Nhóm việc'),
         BottomNavigationBarItem(icon: Icon(Icons.event), label: 'Lịch trình'),
@@ -23,8 +28,43 @@ class AppBottomNavigation extends StatelessWidget {
       currentIndex: currentIndex,
       selectedItemColor: Colors.amber[800],
       unselectedItemColor: Colors.grey,
-      type: BottomNavigationBarType.fixed,
       onTap: onTap,
     );
+  }
+
+  // Hàm chuyển màn hình dùng chung
+  static void navigateToScreen(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => TrangchuWidget()),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const NhomViecWidget()),
+        );
+        break;
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LichtrinhScreen()),
+        );
+        break;
+      case 3:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const TienDoWidget()),
+        );
+        break;
+      case 4:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const NhiemVu()),
+        );
+        break;
+    }
   }
 }

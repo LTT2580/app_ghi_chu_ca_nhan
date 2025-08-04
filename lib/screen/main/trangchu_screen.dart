@@ -549,10 +549,13 @@ class _TrangchuWidgetState extends State<TrangchuWidget> {
             ),
         ],
       ),
-      drawer: Thanhmenu(
-        onMenuSelected: (index) {},
-        selectedIndex: _selectedIndex,
-        currentUser: _currentUser,
+      drawer: UnifiedDrawer(
+          selectedIndex: 0, // Index cho trang chủ
+          currentUser: _currentUser,
+          onMenuSelected: (index) {
+    // Xử lý khi chọn menu nếu cần
+          print('Selected menu index: $index');
+        },
       ),
       body: _buildHomeContent(),
       bottomNavigationBar: BottomNavigationBar(
@@ -583,7 +586,7 @@ class _TrangchuWidgetState extends State<TrangchuWidget> {
             case 2:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LichtrinhWidget()),
+                MaterialPageRoute(builder: (context) => LichtrinhScreen()),
               );
               break;
             case 3:

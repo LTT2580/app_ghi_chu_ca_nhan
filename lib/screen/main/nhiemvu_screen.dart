@@ -3,6 +3,7 @@ import 'package:cham_ly_thuyet/models/nhomviec.dart';
 import 'package:cham_ly_thuyet/models/user.dart';
 import 'package:cham_ly_thuyet/screen/auth/Dangky.dart';
 import 'package:cham_ly_thuyet/screen/auth/Dangnhap.dart';
+import 'package:cham_ly_thuyet/widgets/thanhmenu_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -133,7 +134,14 @@ Future<void> _loadData() async {
           ),
         ],
       ),
-      drawer: _buildDrawer(),
+            drawer: UnifiedDrawer(
+          selectedIndex: 1, // Index cho trang chủ
+          currentUser: _currentUser,
+          onMenuSelected: (index) {
+    // Xử lý khi chọn menu nếu cần
+          print('Selected menu index: $index');
+        },
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _taskGroups.isEmpty
@@ -192,70 +200,7 @@ Future<void> _loadData() async {
     );
   }
 
-  Widget _buildDrawer() {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          UserAccountsDrawerHeader(
-            accountName: Text(_currentUser?.name ?? 'Khách'),
-            accountEmail: Text(_currentUser?.email ?? 'Chưa đăng nhập'),
-            currentAccountPicture: CircleAvatar(
-              backgroundImage: AssetImage(_currentUser?.avatar ?? 'assets/avatar.png'),
-            ),
-            decoration: const BoxDecoration(color: Colors.blue),
-          ),
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Trang chủ'),
-            selected: _menuSelectedIndex == 0,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => TrangchuWidget()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: const Text('Thông tin'),
-            selected: _menuSelectedIndex == 1,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TaiKhoanScreen()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.app_registration),
-            title: const Text('Đăng ký'),
-            selected: _menuSelectedIndex == 2,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => Dangky()),
-              );
-            },
-          ),
-          const Divider(color: Colors.black),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Đăng xuất'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => Dangnhap()),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
+  
 
   Widget _buildBottomNavBar() {
     return BottomNavigationBar(
@@ -279,7 +224,7 @@ Future<void> _loadData() async {
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NhomViecWidget()));
             break;
           case 2: 
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LichtrinhWidget()));
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LichtrinhScreen()));
             break;
           case 3: 
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const TienDoWidget()));

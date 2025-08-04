@@ -2,7 +2,7 @@ import 'package:cham_ly_thuyet/models/user.dart';
 import 'package:cham_ly_thuyet/screen/auth/Dangky.dart';
 import 'package:cham_ly_thuyet/screen/auth/Dangnhap.dart';
 import 'package:cham_ly_thuyet/widgets/app_bottom_navigation.dart';
-import 'package:cham_ly_thuyet/widgets/app_drawer.dart';
+import 'package:cham_ly_thuyet/widgets/thanhmenu_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
@@ -145,10 +145,13 @@ class _TienDoWidgetState extends State<TienDoWidget> {
           ),
         ],
       ),
-      drawer: AppDrawer(
-        currentUser: _currentUser,
-        selectedIndex: _selectedIndex,
-        onMenuSelected: _handleDrawerSelection,
+            drawer: UnifiedDrawer(
+          selectedIndex: 4, // Index cho trang chủ
+          currentUser: _currentUser,
+          onMenuSelected: (index) {
+    // Xử lý khi chọn menu nếu cần
+          print('Selected menu index: $index');
+        },
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -179,28 +182,7 @@ class _TienDoWidgetState extends State<TienDoWidget> {
       ),
     );
   }
-  void _handleDrawerSelection(int index) {
-    setState(() => _selectedIndex = index);
-    Navigator.pop(context);
-    
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => TrangchuWidget()));
-        break;
-      case 1:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NhomViecWidget()));
-        break;
-      case 2:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LichtrinhWidget()));
-        break;
-      case 3:
-        // Đang ở màn hình này, không cần làm gì
-        break;
-      case 4:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NhiemVu()));
-        break;
-    }
-  }
+  
 
   // Hàm xử lý khi chọn item bottom nav
   void _handleBottomNavSelection(int index) {
@@ -213,7 +195,7 @@ class _TienDoWidgetState extends State<TienDoWidget> {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NhomViecWidget()));
         break;
       case 2: 
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LichtrinhWidget()));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LichtrinhScreen()));
         break;
       case 3: 
         // Đang ở màn hình này, không cần làm gì
@@ -499,7 +481,7 @@ class _TienDoWidgetState extends State<TienDoWidget> {
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NhomViecWidget()));
             break;
           case 2: 
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LichtrinhWidget()));
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LichtrinhScreen()));
             break;
           case 3: 
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const TienDoWidget()));
