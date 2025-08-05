@@ -3,6 +3,7 @@ import 'package:cham_ly_thuyet/models/nhomviec.dart';
 import 'package:cham_ly_thuyet/models/user.dart';
 import 'package:cham_ly_thuyet/screen/auth/Dangky.dart';
 import 'package:cham_ly_thuyet/screen/auth/Dangnhap.dart';
+import 'package:cham_ly_thuyet/screen/main/thongbao_screen.dart';
 import 'package:cham_ly_thuyet/widgets/thanhmenu_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -146,12 +147,18 @@ class _NhiemVuState extends State<NhiemVu> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nhiệm vụ'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadData,
+                    actions: [
+              IconButton(
+            icon: Image.asset('assets/icon/bell.png'), // Đường dẫn đến icon chuông
+            onPressed: () {
+              // Chuyển đến trang khác khi nhấn vào icon chuông
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationScreen()),
+              );
+            },
           ),
-        ],
+            ],
       ),
       drawer: UnifiedDrawer(
         selectedIndex: 1, // Index cho trang chủ

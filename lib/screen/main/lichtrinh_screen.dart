@@ -1,6 +1,7 @@
 import 'package:cham_ly_thuyet/models/nhiemvu.dart';
 import 'package:cham_ly_thuyet/models/nhomviec.dart';
 import 'package:cham_ly_thuyet/models/user.dart';
+import 'package:cham_ly_thuyet/screen/main/thongbao_screen.dart';
 import 'package:cham_ly_thuyet/widgets/app_bottom_navigation.dart';
 import 'package:cham_ly_thuyet/widgets/calendar_widget.dart';
 import 'package:flutter/material.dart';
@@ -88,10 +89,18 @@ class _LichtrinhScreenState extends State<LichtrinhScreen> {
           key: _scaffoldKey,
           appBar: AppBar(
             title: const Text('Lịch trình'),
-            leading: IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            ),
+            actions: [
+              IconButton(
+            icon: Image.asset('assets/icon/bell.png'), // Đường dẫn đến icon chuông
+            onPressed: () {
+              // Chuyển đến trang khác khi nhấn vào icon chuông
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationScreen()),
+              );
+            },
+          ),
+            ],
           ),
           drawer: UnifiedDrawer(
   selectedIndex: 2, // Index cho lịch trình

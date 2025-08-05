@@ -50,7 +50,7 @@ class UnifiedDrawer extends StatelessWidget {
           // Nhiệm vụ
           _buildDrawerItem(
             context: context,
-            icon: Icons.task,
+            icon: Icons.list,
             title: 'Nhiệm vụ',
             index: 1,
             onTap: () => _navigateToScreen(context, NhiemVu()),
@@ -59,7 +59,7 @@ class UnifiedDrawer extends StatelessWidget {
           // Lịch trình
           _buildDrawerItem(
             context: context,
-            icon: Icons.calendar_today,
+            icon: Icons.event,
             title: 'Lịch trình',
             index: 2,
             onTap: () => _navigateToScreen(context, LichtrinhScreen()),
@@ -68,7 +68,7 @@ class UnifiedDrawer extends StatelessWidget {
           // Nhóm việc
           _buildDrawerItem(
             context: context,
-            icon: Icons.group_work,
+            icon: Icons.bar_chart,
             title: 'Nhóm việc',
             index: 3,
             onTap: () => _navigateToScreen(context, NhomViecWidget()),
@@ -77,12 +77,14 @@ class UnifiedDrawer extends StatelessWidget {
           // Tiến độ
           _buildDrawerItem(
             context: context,
-            icon: Icons.trending_up,
+            icon: Icons.warning,
             title: 'Tiến độ',
             index: 4,
             onTap: () => _navigateToScreen(context, TienDoWidget()),
           ),
           
+         const Divider(color: Colors.black),
+
           // Thông tin tài khoản
           _buildDrawerItem(
             context: context,

@@ -1,4 +1,5 @@
 // nhomviec_screen.dart
+import 'package:cham_ly_thuyet/screen/main/thongbao_screen.dart';
 import 'package:cham_ly_thuyet/widgets/The_nhom_viec.dart';
 import 'package:cham_ly_thuyet/widgets/app_bottom_navigation.dart';
 import 'package:cham_ly_thuyet/data/database_provider.dart';
@@ -141,12 +142,18 @@ class _NhomViecWidgetState extends State<NhomViecWidget> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nhóm việc'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadData,
+                    actions: [
+              IconButton(
+            icon: Image.asset('assets/icon/bell.png'), // Đường dẫn đến icon chuông
+            onPressed: () {
+              // Chuyển đến trang khác khi nhấn vào icon chuông
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationScreen()),
+              );
+            },
           ),
-        ],
+            ],
       ),
       drawer: UnifiedDrawer(
           selectedIndex: 0,

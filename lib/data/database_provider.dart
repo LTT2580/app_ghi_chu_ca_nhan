@@ -106,4 +106,11 @@ class DatabaseProvider extends ChangeNotifier {
   Future<List<Map<String, dynamic>>> getGroupStats() async {
     return await _dbHelper.getGroupStats();
   }
+
+  Future<User?> getCurrentUser() async {
+  // Trong thực tế, bạn sẽ lấy người dùng từ hệ thống xác thực
+  // Ở đây giả sử lấy người dùng đầu tiên trong DB
+  final users = await _dbHelper.getUsers();
+  return users.isNotEmpty ? users.first : null;
+}
 }

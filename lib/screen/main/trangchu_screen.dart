@@ -7,6 +7,7 @@ import 'package:cham_ly_thuyet/screen/auth/Dangnhap.dart';
 import 'package:cham_ly_thuyet/screen/main/lichtrinh_screen.dart';
 import 'package:cham_ly_thuyet/screen/main/nhiemvu_screen.dart';
 import 'package:cham_ly_thuyet/screen/main/nhomviec_screen.dart';
+import 'package:cham_ly_thuyet/screen/main/thongbao_screen.dart';
 import 'package:cham_ly_thuyet/screen/main/tiendo_screen.dart';
 import 'package:cham_ly_thuyet/screen/tasks/chitietnhomviec_screen.dart';
 import 'package:cham_ly_thuyet/widgets/The_nhom_viec.dart';
@@ -606,47 +607,18 @@ class _TrangchuWidgetState extends State<TrangchuWidget> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.grey[800],
         elevation: 0,
-        actions: [
-          if (_currentUser != null)
-            PopupMenuButton(
-              icon: CircleAvatar(
-                backgroundColor: Colors.blue[100],
-                child: Text(
-                  _currentUser!.name?.substring(0, 1).toUpperCase() ?? 'U',
-                  style: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.bold),
-                ),
-              ),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  child: ListTile(
-                    leading: Icon(Icons.person),
-                    title: Text('Thông tin cá nhân'),
-                    dense: true,
-                  ),
-                ),
-                PopupMenuItem(
-                  child: ListTile(
-                    leading: Icon(Icons.settings),
-                    title: Text('Cài đặt'),
-                    dense: true,
-                  ),
-                ),
-                PopupMenuItem(
-                  child: ListTile(
-                    leading: Icon(Icons.logout),
-                    title: Text('Đăng xuất'),
-                    dense: true,
-                  ),
-                  value: 'logout',
-                ),
-              ],
-              onSelected: (value) {
-                if (value == 'logout') {
-                  _logout();
-                }
-              },
-            ),
-        ],
+                    actions: [
+              IconButton(
+            icon: Image.asset('assets/icon/bell.png'), // Đường dẫn đến icon chuông
+            onPressed: () {
+              // Chuyển đến trang khác khi nhấn vào icon chuông
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationScreen()),
+              );
+            },
+          ),
+            ],
       ),
       drawer: UnifiedDrawer(
           selectedIndex: 0, // Index cho trang chủ
