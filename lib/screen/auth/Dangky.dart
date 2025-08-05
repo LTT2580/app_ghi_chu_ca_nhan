@@ -27,6 +27,15 @@ class _DangkyState extends State<Dangky> {
   bool _isLoading = false;
   bool _acceptTerms = false;
 
+  // My Life color scheme
+  static const Color primaryColor = Color(0xFF4A90E2);
+  static const Color secondaryColor = Color(0xFF7B68EE);
+  static const Color accentColor = Color(0xFF50C878);
+  static const Color backgroundColor = Color(0xFFF8F9FA);
+  static const Color cardColor = Colors.white;
+  static const Color textPrimaryColor = Color(0xFF2C3E50);
+  static const Color textSecondaryColor = Color(0xFF5A6C7D);
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -53,7 +62,6 @@ class _DangkyState extends State<Dangky> {
     setState(() => _isLoading = true);
 
     try {
-      // Tạo đối tượng User mới (LOẠI BỎ xacnhanmatkhau)
       final newUser = User(
         name: _nameController.text.trim(),
         email: _emailController.text.trim().toLowerCase(),
@@ -63,12 +71,10 @@ class _DangkyState extends State<Dangky> {
             : _urlController.text.trim(),
       );
 
-      // Sử dụng Provider hoặc DatabaseHelper trực tiếp
       late int userId;
       
       final databaseProvider = context.read<DatabaseProvider>();
       if (databaseProvider != null) {
-        // Kiểm tra email đã tồn tại
         final existingUser = await databaseProvider.getUserByEmail(newUser.email ?? '');
         if (existingUser != null) {
           _showError('Email đã được đăng ký. Vui lòng sử dụng email khác.');
@@ -78,10 +84,8 @@ class _DangkyState extends State<Dangky> {
         
         userId = await databaseProvider.insertUser(newUser);
       } else {
-        // Sử dụng DatabaseHelper trực tiếp
         final dbHelper = DatabaseHelper();
         
-        // Kiểm tra email đã tồn tại
         final existingUser = await dbHelper.getUserByEmail(newUser.email ?? '');
         if (existingUser != null) {
           _showError('Email đã được đăng ký. Vui lòng sử dụng email khác.');
@@ -93,20 +97,16 @@ class _DangkyState extends State<Dangky> {
       }
       
       if (userId > 0) {
-        // Cập nhật ID cho user
         newUser.id = userId;
         
-        // Lưu thông tin user vào SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('lastRegisteredUser', json.encode(newUser.toJson()));
         await prefs.setBool('isFirstTime', false);
         
         _showSuccess('Đăng ký thành công! Chuyển đến trang đăng nhập...');
         
-        // Clear form
         _clearForm();
         
-        // Chuyển đến màn hình đăng nhập sau 2 giây
         await Future.delayed(const Duration(seconds: 2));
         if (!mounted) return;
         Navigator.pushReplacement(
@@ -162,22 +162,19 @@ class _DangkyState extends State<Dangky> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(
+              message,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            )),
           ],
         ),
-        backgroundColor: Colors.red[600],
+        backgroundColor: const Color(0xFFE74C3C),
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        action: SnackBarAction(
-          label: 'Đóng',
-          textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -188,22 +185,19 @@ class _DangkyState extends State<Dangky> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
+            const Icon(Icons.check_circle_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(
+              message,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            )),
           ],
         ),
-        backgroundColor: Colors.green[600],
+        backgroundColor: accentColor,
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -221,32 +215,60 @@ class _DangkyState extends State<Dangky> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Điều khoản sử dụng'),
-          content: const SingleChildScrollView(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Điều khoản sử dụng',
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: textPrimaryColor,
+            ),
+          ),
+          content: SingleChildScrollView(
             child: Text(
               '1. Bằng việc đăng ký tài khoản, bạn đồng ý tuân thủ các điều khoản sử dụng.\n\n'
               '2. Thông tin cá nhân của bạn sẽ được bảo mật theo chính sách bảo mật của chúng tôi.\n\n'
               '3. Bạn có trách nhiệm bảo mật thông tin đăng nhập của mình.\n\n'
               '4. Nghiêm cấm sử dụng ứng dụng cho các mục đích bất hợp pháp.\n\n'
               '5. Chúng tôi có quyền khóa tài khoản nếu phát hiện hành vi vi phạm.',
-              style: TextStyle(fontSize: 14),
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: textSecondaryColor,
+                height: 1.5,
+              ),
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Đồng ý'),
+              child: Text(
+                'Không đồng ý',
+                style: GoogleFonts.inter(
+                  color: textSecondaryColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               onPressed: () {
                 setState(() {
-                  _acceptTerms = true;
+                  _acceptTerms = false;
                 });
                 Navigator.of(context).pop();
               },
             ),
-            TextButton(
-              child: const Text('Không đồng ý'),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(
+                'Đồng ý',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               onPressed: () {
                 setState(() {
-                  _acceptTerms = false;
+                  _acceptTerms = true;
                 });
                 Navigator.of(context).pop();
               },
@@ -260,11 +282,11 @@ class _DangkyState extends State<Dangky> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(20.0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -274,55 +296,86 @@ class _DangkyState extends State<Dangky> {
                   
                   // Logo và tiêu đề
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
-                      color: Colors.green[50],
-                      borderRadius: BorderRadius.circular(20),
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
-                        Image.asset(
-                           'assets/images/logo.png',
-                            width: 50,
-                            height: 50,
-                           ),               
-                        const SizedBox(height: 50),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [primaryColor, secondaryColor],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Image.asset(
+                            'assets/icon/logo.png',
+                            width: 48,
+                            height: 48,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                         Text(
-                          'My Plant',
-                          style: TextStyle(
-                            fontSize: 48,
-                            color: Colors.green[700],
+                          'My Life',
+                          style: GoogleFonts.inter(
+                            fontSize: 32,
                             fontWeight: FontWeight.bold,
+                            foreground: Paint()
+                              ..shader = LinearGradient(
+                                colors: [primaryColor, secondaryColor],
+                              ).createShader(const Rect.fromLTWH(0.0, 0.0, 200.0, 70.0)),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Quản lý cuộc sống của bạn',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: textSecondaryColor,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 32),
                   
                   Text(
                     'Tạo tài khoản mới',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
+                      color: textPrimaryColor,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Điền thông tin để bắt đầu sử dụng ứng dụng',
-                    style: TextStyle(
+                    'Điền thông tin để bắt đầu hành trình của bạn',
+                    style: GoogleFonts.inter(
                       fontSize: 16,
-                      color: Colors.grey[600],
+                      color: textSecondaryColor,
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 32),
 
                   // Form fields
                   _buildFormField(
                     controller: _nameController,
                     label: 'Họ và tên',
-                    icon: Icons.person,
+                    icon: Icons.person_outline,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Vui lòng nhập họ tên';
@@ -342,7 +395,7 @@ class _DangkyState extends State<Dangky> {
                   _buildFormField(
                     controller: _emailController,
                     label: 'Email',
-                    icon: Icons.email,
+                    icon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -360,7 +413,7 @@ class _DangkyState extends State<Dangky> {
                   _buildFormField(
                     controller: _passwordController,
                     label: 'Mật khẩu',
-                    icon: Icons.lock,
+                    icon: Icons.lock_outline,
                     isPassword: true,
                     isPasswordVisible: _isPasswordVisible,
                     onTogglePassword: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
@@ -401,7 +454,7 @@ class _DangkyState extends State<Dangky> {
                   _buildFormField(
                     controller: _urlController,
                     label: 'URL hình ảnh (tùy chọn)',
-                    icon: Icons.image,
+                    icon: Icons.image_outlined,
                     validator: (value) {
                       if (value != null && value.isNotEmpty && value != 'assets/avatar.png') {
                         final urlRegex = RegExp(r'^(https?|ftp)://[^\s/$.?#].[^\s]*$');
@@ -412,15 +465,22 @@ class _DangkyState extends State<Dangky> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
                   // Checkbox điều khoản
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[300]!),
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey[200]!),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Row(
                       children: [
@@ -431,16 +491,18 @@ class _DangkyState extends State<Dangky> {
                               _acceptTerms = value ?? false;
                             });
                           },
-                          activeColor: Colors.green[600],
+                          activeColor: primaryColor,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                         ),
                         Expanded(
                           child: GestureDetector(
                             onTap: _showTermsDialog,
                             child: Text(
                               'Tôi đồng ý với điều khoản sử dụng',
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 fontSize: 14,
-                                color: Colors.blue[700],
+                                color: primaryColor,
+                                fontWeight: FontWeight.w500,
                                 decoration: TextDecoration.underline,
                               ),
                             ),
@@ -449,14 +511,14 @@ class _DangkyState extends State<Dangky> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 32),
 
                   // Buttons
                   _isLoading 
                       ? _buildLoadingWidget()
                       : _buildActionButtons(),
                   
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   
                   // Link đăng nhập
                   _buildLoginLink(),
@@ -481,11 +543,11 @@ class _DangkyState extends State<Dangky> {
   }) {
     return Container(
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
@@ -494,43 +556,50 @@ class _DangkyState extends State<Dangky> {
         controller: controller,
         keyboardType: keyboardType,
         obscureText: isPassword && !(isPasswordVisible ?? false),
+        style: GoogleFonts.inter(
+          fontSize: 16,
+          color: textPrimaryColor,
+          fontWeight: FontWeight.w500,
+        ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(
-            color: Colors.grey[700],
+          labelStyle: GoogleFonts.inter(
+            color: textSecondaryColor,
             fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
-          prefixIcon: Icon(icon, color: Colors.green[600]),
+          prefixIcon: Icon(icon, color: primaryColor, size: 22),
           suffixIcon: isPassword ? IconButton(
             icon: Icon(
-              isPasswordVisible ?? false ? Icons.visibility : Icons.visibility_off,
-              color: Colors.grey[600],
+              isPasswordVisible ?? false ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+              color: textSecondaryColor,
+              size: 20,
             ),
             onPressed: onTogglePassword,
           ) : null,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.grey[200]!),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.grey[200]!),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: Colors.green[600]!, width: 2),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: primaryColor, width: 2),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(color: Colors.red, width: 2),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFE74C3C), width: 2),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(color: Colors.red, width: 2),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFFE74C3C), width: 2),
           ),
           filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          fillColor: cardColor,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         ),
         validator: validator,
       ),
@@ -539,23 +608,31 @@ class _DangkyState extends State<Dangky> {
 
   Widget _buildLoadingWidget() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.green[50],
-        borderRadius: BorderRadius.circular(15),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
           CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.green[600]!),
+            valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+            strokeWidth: 3,
           ),
           const SizedBox(height: 16),
           Text(
             'Đang tạo tài khoản...',
-            style: TextStyle(
-              color: Colors.green[700],
+            style: GoogleFonts.inter(
+              color: textPrimaryColor,
               fontSize: 16,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -568,61 +645,87 @@ class _DangkyState extends State<Dangky> {
       children: [
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.person_add, size: 24),
-            onPressed: _register,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green[600],
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [primaryColor, secondaryColor],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
               ),
-              elevation: 3,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
-            label: const Text(
-              'Đăng ký',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.person_add_outlined, size: 20),
+              onPressed: _register,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              label: Text(
+                'Tạo tài khoản',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.clear_all, size: 20),
+                icon: const Icon(Icons.refresh_outlined, size: 18),
                 onPressed: _clearForm,
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.orange[400]!, width: 2),
+                  side: BorderSide(color: Colors.orange[400]!, width: 1.5),
                   foregroundColor: Colors.orange[600],
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                label: const Text(
+                label: Text(
                   'Xóa form',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.close, size: 20),
+                icon: const Icon(Icons.close_outlined, size: 18),
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red, width: 2),
-                  foregroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: const BorderSide(color: Color(0xFFE74C3C), width: 1.5),
+                  foregroundColor: const Color(0xFFE74C3C),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                label: const Text(
+                label: Text(
                   'Thoát',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -634,27 +737,28 @@ class _DangkyState extends State<Dangky> {
 
   Widget _buildLoginLink() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             'Đã có tài khoản? ', 
-            style: TextStyle(
+            style: GoogleFonts.inter(
               fontSize: 16, 
-              color: Colors.grey[600]
-            )
+              color: textSecondaryColor,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           GestureDetector(
             onTap: _goToLogin,
             child: Text(
               'Đăng nhập ngay', 
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 16, 
-                color: Colors.green[700],
+                color: primaryColor,
                 fontWeight: FontWeight.bold,
                 decoration: TextDecoration.underline,
-              )
+              ),
             ),
           ),
         ],

@@ -1,3 +1,4 @@
+// nhomviec_screen.dart
 import 'package:cham_ly_thuyet/widgets/The_nhom_viec.dart';
 import 'package:cham_ly_thuyet/widgets/app_bottom_navigation.dart';
 import 'package:cham_ly_thuyet/data/database_provider.dart';
@@ -8,7 +9,7 @@ import 'package:cham_ly_thuyet/screen/main/lichtrinh_screen.dart';
 import 'package:cham_ly_thuyet/screen/main/nhiemvu_screen.dart';
 import 'package:cham_ly_thuyet/screen/main/tiendo_screen.dart';
 import 'package:cham_ly_thuyet/screen/main/trangchu_screen.dart';
-import 'package:cham_ly_thuyet/screen/tasks/chitietnhomviec_screen.dart';
+import 'package:cham_ly_thuyet/screen/tasks/chitietnhomviec_screen.dart'; // Import trang chi tiết
 import 'package:cham_ly_thuyet/screen/tasks/themnhomviec_screen.dart';
 import 'package:cham_ly_thuyet/widgets/thanhmenu_widget.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,7 @@ class NhomViecWidget extends StatefulWidget {
 }
 
 class _NhomViecWidgetState extends State<NhomViecWidget> {
-  int _selectedIndex = 1; // Vì đây là màn hình Nhóm việc, index 1
+  int _selectedIndex = 1;
   User? _currentUser;
   bool _isLoading = true;
   List<NhomViec> _workGroups = [];
@@ -52,6 +53,7 @@ class _NhomViecWidgetState extends State<NhomViecWidget> {
     }
   }
 
+  // Tải danh sách nhóm việc từ database
   Future<void> _loadData() async {
     try {
       final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
@@ -68,26 +70,31 @@ class _NhomViecWidgetState extends State<NhomViecWidget> {
     }
   }
 
+  // Thêm nhóm việc mới
   Future<void> _addNewGroup(NhomViec newGroup) async {
     try {
       final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
       await dbProvider.insertNhomViec(newGroup);
+      await _loadData(); // Tải lại dữ liệu sau khi thêm
     } catch (e) {
       _showErrorSnackbar('Lỗi khi thêm nhóm việc');
       print("Error adding new group: $e");
     }
   }
 
+  // Xóa nhóm việc
   Future<void> _deleteGroup(String groupId) async {
     try {
       final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
       await dbProvider.deleteNhomViec(groupId);
+      await _loadData(); // Tải lại dữ liệu sau khi xóa
     } catch (e) {
       _showErrorSnackbar('Lỗi khi xóa nhóm việc');
       print("Error deleting group: $e");
     }
   }
 
+  // Chuyển đổi trạng thái nhiệm vụ
   Future<void> _toggleTaskStatus(NhiemVuModel task, bool isCompleted) async {
     try {
       final dbProvider = Provider.of<DatabaseProvider>(context, listen: false);
@@ -108,8 +115,7 @@ class _NhomViecWidgetState extends State<NhomViecWidget> {
     );
   }
 
-
-  // Hàm xử lý khi chọn item bottom nav
+  // Xử lý chọn item bottom nav
   void _handleBottomNavSelection(int index) {
     setState(() => _selectedIndex = index);
     switch (index) {
@@ -117,7 +123,6 @@ class _NhomViecWidgetState extends State<NhomViecWidget> {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => TrangchuWidget()));
         break;
       case 1: 
-        // Đang ở màn hình này, không cần làm gì
         break;
       case 2: 
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LichtrinhScreen()));
@@ -144,17 +149,37 @@ class _NhomViecWidgetState extends State<NhomViecWidget> {
         ],
       ),
       drawer: UnifiedDrawer(
-          selectedIndex: 0, // Index cho trang chủ
+          selectedIndex: 0,
           currentUser: _currentUser,
           onMenuSelected: (index) {
-    // Xử lý khi chọn menu nếu cần
-          print('Selected menu index: $index');
-        },
+            print('Selected menu index: $index');
+          },
       ),
       body: _isLoading 
           ? const Center(child: CircularProgressIndicator())
           : _workGroups.isEmpty
-              ? const Center(child: Text('Không có nhóm việc nào'))
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Không có nhóm việc nào'),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () async {
+                          // Chuyển đến trang thêm nhóm việc
+                          final newGroup = await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const ThemNhomViecScreen()),
+                          );
+                          if (newGroup != null && newGroup is NhomViec) {
+                            await _addNewGroup(newGroup);
+                          }
+                        },
+                        child: const Text('Thêm nhóm việc'),
+                      ),
+                    ],
+                  ),
+                )
               : Column(
                   children: [
                     Expanded(
@@ -193,34 +218,41 @@ class _NhomViecWidgetState extends State<NhomViecWidget> {
     );
   }
 
-  // Trong nhomviec_screen.dart
-Widget _buildNhomViecCard(NhomViec nhomViec) {
-  return FutureBuilder<List<NhiemVuModel>>(
-    future: Provider.of<DatabaseProvider>(context, listen: false)
-        .getNhiemVuByGroupId(nhomViec.id),
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        // Hiển thị trạng thái loading khi đang chờ dữ liệu
-        return Center(child: CircularProgressIndicator());
-      } else if (snapshot.hasError) {
-        // Xử lý lỗi nếu có
-        return Center(child: Text('Lỗi: ${snapshot.error}'));
-      } else if (snapshot.hasData) {
-        // Khi dữ liệu đã sẵn sàng
-        final tasks = snapshot.data ?? [];
-        return WorkGroupCard(
-          key: Key(nhomViec.id),
-          nhomViec: nhomViec.copyWith(tasks: tasks), // Truyền tasks vào đây
-          isCompactView: false,
-          showDeleteOption: true,
-          onDelete: (groupId) => _deleteGroup(groupId),
-          onTaskToggle: (task, value) => _toggleTaskStatus(task, value),
-        );
-      } else {
-        // Trường hợp không có dữ liệu
-        return Center(child: Text('Không có nhiệm vụ nào.'));
-      }
-    },
-  );
-}
+  // Widget hiển thị card nhóm việc
+  Widget _buildNhomViecCard(NhomViec nhomViec) {
+    return FutureBuilder<List<NhiemVuModel>>(
+      future: Provider.of<DatabaseProvider>(context, listen: false)
+          .getNhiemVuByGroupId(nhomViec.id),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Lỗi: ${snapshot.error}'));
+        } else if (snapshot.hasData) {
+          final tasks = snapshot.data ?? [];
+          return InkWell(
+            onTap: () {
+              // Chuyển đến trang chi tiết nhóm việc khi nhấn vào card
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChitietnhomviecWidget(group: nhomViec.copyWith(tasks: tasks)),
+                ),
+              );
+            },
+            child: WorkGroupCard(
+              key: Key(nhomViec.id),
+              nhomViec: nhomViec.copyWith(tasks: tasks),
+              isCompactView: false,
+              showDeleteOption: true,
+              onDelete: (groupId) => _deleteGroup(groupId),
+              onTaskToggle: (task, value) => _toggleTaskStatus(task, value),
+            ),
+          );
+        } else {
+          return const Center(child: Text('Không có nhiệm vụ nào.'));
+        }
+      },
+    );
+  }
 }

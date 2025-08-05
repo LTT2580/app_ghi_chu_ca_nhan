@@ -39,12 +39,10 @@ void main() async {
     print('Database initialization failed: $e');
   }
 
-  runApp(
+ runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (context) => DatabaseProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => DatabaseProvider()),
       ],
       child: const MyApp(),
     ),

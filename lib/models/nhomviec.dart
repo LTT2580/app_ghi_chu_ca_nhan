@@ -65,6 +65,18 @@ class NhomViec {
       parentGroupId: json['parentGroupId'],
     );
   }
+    factory NhomViec.fromMap(Map<String, dynamic> map) {
+    return NhomViec(
+      id: map['id']?.toString() ?? '',
+      title: map['title']?.toString() ?? '',
+      description: map['description']?.toString() ?? '',
+      timeRange: map['time_range']?.toString() ?? '',
+      userId: map['user_id']?.toString(),
+      color: map['color']?.toString(),
+      parentGroupId: map['parent_group_id']?.toString(),
+      tasks: [], // Khởi tạo tasks rỗng
+    );
+  }
 
   NhomViec copyWith({
     String? id,

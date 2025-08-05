@@ -291,29 +291,18 @@ class DatabaseHelper {
   }
 
 // Trong database_helper.dart
+// Trong hàm getNhomViecList
 Future<List<NhomViec>> getNhomViecList() async {
   try {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('nhom_viec');
     
-    // KHÔNG load tasks ở đây nữa
-    return maps.map((map) => NhomViec(
-      id: map['id'],
-      title: map['title'],
-      description: map['description'],
-      timeRange: map['time_range'],
-      userId: map['user_id']?.toString(),
-      color: map['color'],
-      parentGroupId: map['parent_group_id'],
-      // tasks: [] // Bỏ dòng này
-    )).toList();
-    
+    return maps.map((map) => NhomViec.fromMap(map)).toList();
   } catch (e) {
     debugPrint('Error getting nhom viec list: $e');
     return [];
   }
 }
-
   Future<NhomViec?> getNhomViecById(String id) async {
     try {
       final db = await database;
