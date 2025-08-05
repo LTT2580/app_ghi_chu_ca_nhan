@@ -141,7 +141,7 @@ class _TienDoWidgetState extends State<TienDoWidget> {
         title: const Text('Tiến độ hoàn thành nhiệm vụ'),
                     actions: [
               IconButton(
-            icon: Image.asset('assets/icon/bell.png'), // Đường dẫn đến icon chuông
+            icon: Image.asset('assets/icon/bell.png',width: 24, height: 24,), // Đường dẫn đến icon chuông
             onPressed: () {
               // Chuyển đến trang khác khi nhấn vào icon chuông
               Navigator.push(

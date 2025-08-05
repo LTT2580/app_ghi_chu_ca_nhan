@@ -113,4 +113,7 @@ class DatabaseProvider extends ChangeNotifier {
   final users = await _dbHelper.getUsers();
   return users.isNotEmpty ? users.first : null;
 }
+Future<NhiemVuModel?> getNhiemVuById(String id) async {
+    return await _dbHelper.getNhiemVuById(id);
+  }
 }

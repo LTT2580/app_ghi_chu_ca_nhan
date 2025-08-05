@@ -66,6 +66,7 @@ class NhiemVuModel {
   String get formattedDate {
     return DateFormat('dd/MM/yyyy').format(date);
   }
+  
 
   String formattedTimeRange(BuildContext context) {
     return '${startTime.format(context)} - ${endTime.format(context)}';

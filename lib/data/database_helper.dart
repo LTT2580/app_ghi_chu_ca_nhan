@@ -586,4 +586,23 @@ Future<List<NhomViec>> getNhomViecList() async {
       return [];
     }
   }
+    Future<NhiemVuModel?> getNhiemVuById(String id) async {
+    try {
+      final db = await database;
+      final List<Map<String, dynamic>> maps = await db.query(
+        'nhiem_vu',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (maps.isNotEmpty) {
+        return _nhiemVuFromMap(maps.first);
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error getting nhiem vu by id: $e');
+      }
+      return null;
+    }
+  }
 }
